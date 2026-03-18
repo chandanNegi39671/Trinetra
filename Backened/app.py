@@ -1097,7 +1097,13 @@ def whatsapp_webhook():
     msg.body(reply)
     return str(resp)
 
-
+@app.route("/health")
+def health():
+    return jsonify({
+        "status": "ok",
+        "ml": ML_AVAILABLE,
+        "gsb": bool(GOOGLE_SAFE_BROWSING_KEY)
+    })
 # ══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
