@@ -1,0 +1,24 @@
+# ── Core API ──────────────────────────────────────────────────────────────────
+flask==3.0.3
+flask-cors==4.0.1
+flask-limiter==3.7.0
+gunicorn==22.0.0
+requests==2.31.0
+python-whois==0.9.4
+python-dotenv==1.0.1
+
+# ── ML (pinned exactly — avoids numpy rc/yanked version resolution bug) ───────
+numpy==1.26.4
+scikit-learn==1.4.2
+xgboost==2.0.3
+pandas==2.2.2
+joblib==1.4.2
+
+# ── OCR ───────────────────────────────────────────────────────────────────────
+dnspython==2.6.1
+beautifulsoup4==4.12.3
+pytesseract==0.3.10
+Pillow==10.4.0
+
+# ── WhatsApp Bot ──────────────────────────────────────────────────────────────
+twilio==9.2.3

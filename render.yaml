@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: trinetra-all-in-one
+    runtime: python
+    rootDir: Backened
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GOOGLE_SAFE_BROWSING_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        value: whatsapp:+14155238886
+      - key: ALLOWED_ORIGINS
+        value: https://your-vercel-domain.vercel.app,http://localhost:5500

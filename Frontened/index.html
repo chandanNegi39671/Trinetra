@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TRINETRA — AI Scam Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:wght@400;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#020812;--surface:rgba(6,18,42,0.88);--glass:rgba(0,200,255,0.04);
+  --border:rgba(0,200,255,0.15);--cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.6);
+  --red:#ff2d55;--orange:#ff9500;--green:#00ff88;--yellow:#ffd60a;
+  --text:#e0f0ff;--muted:rgba(180,210,255,0.45);
+  --font-head:'Orbitron',monospace;--font-mono:'Space Mono',monospace;--font-body:'Rajdhani',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+#three-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+body::before{content:'';position:fixed;inset:0;z-index:1;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,200,255,0.012) 2px,rgba(0,200,255,0.012) 4px);
+  pointer-events:none;animation:scanShift 10s linear infinite}
+@keyframes scanShift{from{background-position:0 0}to{background-position:0 100px}}
+#app{position:relative;z-index:2;max-width:1400px;margin:0 auto;padding:0 2rem 5rem}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2.5rem}
+.logo-block{display:flex;align-items:center;gap:1rem}
+.logo-eye{width:52px;height:52px;animation:pulseEye 3s ease-in-out infinite}
+@keyframes pulseEye{0%,100%{filter:drop-shadow(0 0 6px var(--cyan))}50%{filter:drop-shadow(0 0 22px var(--cyan)) drop-shadow(0 0 50px rgba(0,200,255,0.3))}}
+.logo-title{font-family:var(--font-head);font-size:1.8rem;font-weight:900;letter-spacing:.3em;
+  background:linear-gradient(135deg,#fff 0%,var(--cyan) 60%,#0077aa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-family:var(--font-mono);font-size:.62rem;color:var(--cyan-dim);letter-spacing:.2em;margin-top:2px}
+.header-status{display:flex;gap:1.5rem;align-items:center}
+.status-dot{display:flex;align-items:center;gap:.4rem;font-family:var(--font-mono);font-size:.68rem;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;animation:blink 2s ease-in-out infinite}
+.dot.g{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.c{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* HERO */
+.hero{text-align:center;margin-bottom:3rem;padding:1rem 0}
+.hero-tag{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.3em;color:var(--cyan-dim);margin-bottom:.8rem}
+.hero h1{font-family:var(--font-head);font-size:clamp(2rem,5vw,3.6rem);font-weight:900;line-height:1.1;margin-bottom:.5rem}
+.hero h1 span{background:linear-gradient(90deg,var(--cyan),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--muted);font-size:1rem;max-width:500px;margin:0 auto 2rem}
+
+/* INPUT */
+.input-zone{display:flex;gap:0;max-width:760px;margin:0 auto;position:relative}
+.input-zone::before{content:'';position:absolute;inset:-1px;border-radius:12px;
+  background:linear-gradient(135deg,var(--cyan),var(--red),var(--cyan));background-size:200% 200%;
+  animation:gb 4s ease infinite;z-index:-1}
+@keyframes gb{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+#url-input{flex:1;background:rgba(0,10,25,0.97);border:none;outline:none;color:var(--text);
+  font-family:var(--font-mono);font-size:.84rem;padding:1rem 1.4rem;border-radius:11px 0 0 11px;caret-color:var(--cyan)}
+#url-input::placeholder{color:var(--muted)}
+#scan-btn{background:linear-gradient(135deg,var(--cyan),#0077cc);border:none;cursor:pointer;
+  color:#000;font-family:var(--font-head);font-size:.72rem;font-weight:700;letter-spacing:.15em;
+  padding:1rem 2rem;border-radius:0 11px 11px 0;transition:all .2s;white-space:nowrap}
+#scan-btn:hover{background:linear-gradient(135deg,#fff,var(--cyan));transform:translateX(2px)}
+#scan-btn:disabled{opacity:.5;cursor:wait}
+
+/* TABS */
+.tabs{display:flex;gap:.5rem;max-width:760px;margin:1.2rem auto 0;justify-content:center}
+.tab-btn{background:var(--glass);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);
+  font-size:.68rem;letter-spacing:.1em;padding:.5rem 1.2rem;border-radius:6px;cursor:pointer;transition:all .2s}
+.tab-btn.active,.tab-btn:hover{background:rgba(0,200,255,0.1);border-color:var(--cyan);color:var(--cyan)}
+.tab-content{display:none;max-width:760px;margin:1rem auto 0}
+.tab-content.active{display:block}
+#sms-input{width:100%;background:rgba(0,10,25,0.97);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:var(--font-mono);font-size:.82rem;padding:1rem;resize:vertical;min-height:90px;outline:none;transition:border-color .2s}
+#sms-input:focus{border-color:var(--cyan)}
+#sms-btn{margin-top:.6rem;background:linear-gradient(135deg,#7c00ff,var(--red));border:none;cursor:pointer;
+  color:#fff;font-family:var(--font-head);font-size:.7rem;font-weight:700;letter-spacing:.15em;
+  padding:.7rem 2rem;border-radius:8px;transition:all .2s}
+#sms-btn:hover{filter:brightness(1.2);transform:translateY(-1px)}
+
+/* LOADING */
+#loading{display:none;text-align:center;padding:3rem}
+.loader-ring{width:80px;height:80px;border:2px solid var(--border);border-top-color:var(--cyan);
+  border-radius:50%;margin:0 auto 1rem;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-family:var(--font-mono);font-size:.72rem;color:var(--cyan-dim);letter-spacing:.2em;animation:flicker 1.5s ease-in-out infinite}
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* RESULT */
+#result{display:none;margin-top:2.5rem}
+.result-grid{display:grid;grid-template-columns:310px 1fr;gap:1.5rem;align-items:start}
+
+/* SCORE CARD */
+.score-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;
+  backdrop-filter:blur(20px);text-align:center;position:relative;overflow:hidden;transition:border-color .5s,box-shadow .5s}
+.score-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at center,rgba(0,200,255,0.05) 0%,transparent 60%);pointer-events:none}
+.gauge-wrap{position:relative;width:200px;margin:0 auto 1rem}
+.gauge-svg{width:200px;height:120px;overflow:visible}
+.gauge-track{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:14;stroke-linecap:round}
+.gauge-fill{fill:none;stroke-width:14;stroke-linecap:round;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1),stroke .5s ease;transform-origin:center}
+.gauge-score{font-family:var(--font-head);font-size:3.5rem;font-weight:900;line-height:1;transition:color .5s}
+.gauge-label{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.25em;margin-top:.3rem}
+.score-meta{margin-top:1.2rem;display:flex;flex-direction:column;gap:.6rem}
+.score-row{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;
+  padding:.5rem .8rem;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.05)}
+.score-row-label{color:var(--muted);font-family:var(--font-mono);font-size:.68rem}
+.score-row-val{font-weight:700;font-family:var(--font-head);font-size:.72rem}
+
+/* DETAIL CARDS */
+.details-col{display:flex;flex-direction:column;gap:1rem}
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.5rem;
+  backdrop-filter:blur(16px);transition:border-color .3s,transform .2s;animation:fadeUp .5s ease both}
+.detail-card:hover{border-color:rgba(0,200,255,0.35);transform:translateY(-2px)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem}
+.card-title{font-family:var(--font-head);font-size:.7rem;letter-spacing:.2em;color:var(--cyan-dim)}
+.card-badge{font-family:var(--font-mono);font-size:.62rem;padding:.25rem .7rem;border-radius:20px;font-weight:700;letter-spacing:.05em}
+.badge-safe{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.3)}
+.badge-warn{background:rgba(255,149,0,.12);color:var(--orange);border:1px solid rgba(255,149,0,.3)}
+.badge-danger{background:rgba(255,45,85,.12);color:var(--red);border:1px solid rgba(255,45,85,.3)}
+.badge-info{background:rgba(0,200,255,.08);color:var(--cyan);border:1px solid rgba(0,200,255,.2)}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.metric{background:rgba(255,255,255,.025);border-radius:8px;padding:.7rem;border:1px solid rgba(255,255,255,.04)}
+.metric-label{font-size:.62rem;color:var(--muted);margin-bottom:.25rem}
+.metric-val{font-family:var(--font-mono);font-size:.8rem;font-weight:700}
+.flags-wrap{display:flex;flex-wrap:wrap;gap:.4rem}
+.flag-chip{font-size:.68rem;padding:.25rem .7rem;border-radius:20px;
+  border:1px solid rgba(255,45,85,.4);background:rgba(255,45,85,.08);color:#ff6b82;font-family:var(--font-mono)}
+.flag-chip.ok{border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.06);color:#5fffaa}
+.matrix-row{display:grid;grid-template-columns:130px 1fr 52px;align-items:center;gap:.8rem;
+  padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.matrix-row:last-child{border-bottom:none}
+.matrix-label{font-size:.72rem;color:var(--muted)}
+.matrix-bar-bg{background:rgba(255,255,255,.05);border-radius:4px;height:6px;overflow:hidden}
+.matrix-bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.matrix-pct{font-family:var(--font-mono);font-size:.68rem;text-align:right}
+.why-list{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+.why-list li{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:var(--muted)}
+.why-list li .icon{flex-shrink:0;margin-top:1px}
+
+/* SMS */
+#sms-result{display:none;margin-top:2rem}
+.sms-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;backdrop-filter:blur(20px)}
+
+/* HISTORY */
+#history-section{margin-top:3rem}
+.section-title{font-family:var(--font-head);font-size:.72rem;letter-spacing:.3em;color:var(--cyan-dim);
+  margin-bottom:1rem;display:flex;align-items:center;gap:.7rem}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.history-table{width:100%;border-collapse:collapse}
+.history-table th{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.15em;color:var(--muted);
+  text-align:left;padding:.6rem 1rem;border-bottom:1px solid var(--border)}
+.history-table td{font-size:.78rem;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--font-mono)}
+.history-table tr:hover td{background:rgba(0,200,255,.03)}
+.hist-url{color:var(--muted);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* TOAST */
+#toast{position:fixed;bottom:2rem;right:2rem;z-index:999;background:rgba(255,45,85,.15);
+  border:1px solid var(--red);color:var(--red);border-radius:10px;padding:.8rem 1.4rem;
+  font-family:var(--font-mono);font-size:.72rem;display:none;backdrop-filter:blur(20px);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+@media(max-width:900px){.result-grid{grid-template-columns:1fr}.score-card{max-width:340px;margin:0 auto}}
+@media(max-width:600px){.header-status{display:none}#app{padding:0 1rem 3rem}.metric-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<canvas id="three-canvas"></canvas>
+
+<div id="app">
+  <!-- HEADER -->
+  <header>
+    <div class="logo-block">
+      <svg class="logo-eye" width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <ellipse cx="26" cy="26" rx="24" ry="24" stroke="rgba(0,200,255,0.25)" stroke-width="1"/>
+        <path d="M4 26 C10 13 42 13 48 26 C42 39 10 39 4 26Z" stroke="#00c8ff" stroke-width="1.5" fill="none"/>
+        <circle cx="26" cy="26" r="9" stroke="#00c8ff" stroke-width="1.5" fill="none"/>
+        <circle cx="26" cy="26" r="4" fill="#00c8ff" opacity=".9"/>
+        <circle cx="28.5" cy="23.5" r="1.5" fill="white" opacity=".7"/>
+        <line x1="2" y1="26" x2="50" y2="26" stroke="rgba(0,200,255,0.18)" stroke-width=".5"/>
+      </svg>
+      <div>
+        <div class="logo-title">TRINETRA</div>
+        <div class="logo-sub">AI SCAM INTELLIGENCE ENGINE v3.1</div>
+      </div>
+    </div>
+    <div class="header-status">
+      <div class="status-dot"><span class="dot g"></span>ML ENGINE</div>
+      <div class="status-dot"><span class="dot c"></span>OCR READY</div>
+      <div class="status-dot"><span class="dot" id="gsb-dot" style="background:var(--muted)"></span>SAFE BROWSING</div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">// XGBOOST ML + 18 THREAT SIGNALS + GOOGLE SAFE BROWSING</div>
+    <h1>Detect <span>Scam Links</span><br/>Before They Strike</h1>
+    <p>Real-time phishing, malware & fraud detection built for India</p>
+
+    <div class="input-zone">
+      <input id="url-input" type="text" placeholder="Paste suspicious URL... e.g. http://sbi-kyc-update.xyz"/>
+      <button id="scan-btn" onclick="scanURL()">⚡ SCAN</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('url')">🔗 URL SCAN</button>
+      <button class="tab-btn" onclick="switchTab('sms')">📱 SMS SCAN</button>
+    </div>
+    <div id="tab-sms" class="tab-content">
+      <textarea id="sms-input" placeholder="Paste suspicious SMS or WhatsApp message...&#10;E.g.: Dear customer your SBI KYC expired. Click immediately http://sbi-kyc.xyz to avoid block"></textarea><br>
+      <button id="sms-btn" onclick="scanSMS()">🔍 ANALYZE MESSAGE</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="loader-ring"></div>
+    <div class="loader-text" id="loading-text">INITIALIZING THREAT ANALYSIS...</div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result">
+    <div class="result-grid">
+      <div class="score-card" id="score-card">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 200 120">
+            <path class="gauge-track" d="M 20 110 A 80 80 0 0 1 180 110" stroke-dasharray="251" stroke-dashoffset="0"/>
+            <path class="gauge-fill" id="gauge-fill" d="M 20 110 A 80 80 0 0 1 180 110" stroke-dasharray="251" stroke-dashoffset="251"/>
+          </svg>
+        </div>
+        <div class="gauge-score" id="gauge-score">0</div>
+        <div class="gauge-label" id="gauge-label">SCANNING...</div>
+        <div class="score-meta">
+          <div class="score-row"><span class="score-row-label">ML MODEL</span><span class="score-row-val" id="ml-val">—</span></div>
+          <div class="score-row"><span class="score-row-label">RULE ENGINE</span><span class="score-row-val" id="rule-val">—</span></div>
+          <div class="score-row"><span class="score-row-label">ENSEMBLE</span><span class="score-row-val" id="ens-val">—</span></div>
+          <div class="score-row"><span class="score-row-label">SAFE BROWSING</span><span class="score-row-val" id="gsb-val">—</span></div>
+        </div>
+      </div>
+      <div class="details-col" id="details-col"></div>
+    </div>
+  </div>
+
+  <!-- SMS RESULT -->
+  <div id="sms-result"><div class="sms-card" id="sms-card-inner"></div></div>
+
+  <!-- HISTORY -->
+  <div id="history-section">
+    <div class="section-title">SCAN HISTORY</div>
+    <table class="history-table">
+      <thead><tr><th>URL / MESSAGE</th><th>SCORE</th><th>VERDICT</th><th>TIME</th></tr></thead>
+      <tbody id="history-body">
+        <tr><td colspan="4" style="color:var(--muted);font-size:.72rem;padding:2rem;text-align:center">No scans yet — start scanning!</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- THREE.JS 3D BACKGROUND -->
+<script>
+(function(){
+  const canvas=document.getElementById('three-canvas');
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  renderer.setClearColor(0x000000,0);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,1000);
+  camera.position.set(0,0,28);
+
+  // Globe
+  const globe=new THREE.Mesh(
+    new THREE.SphereGeometry(10,24,24),
+    new THREE.MeshBasicMaterial({color:0x00c8ff,wireframe:true,transparent:true,opacity:.055})
+  );
+  globe.position.set(18,-4,-10);
+  scene.add(globe);
+  scene.add(Object.assign(new THREE.Mesh(new THREE.SphereGeometry(9.4,32,32),
+    new THREE.MeshBasicMaterial({color:0x001a33,transparent:true,opacity:.4})),{position:globe.position}));
+
+  // Particles
+  const pp=new Float32Array(500*3);
+  for(let i=0;i<500;i++){pp[i*3]=(Math.random()-.5)*90;pp[i*3+1]=(Math.random()-.5)*65;pp[i*3+2]=(Math.random()-.5)*40-15}
+  const pts=new THREE.Points(
+    Object.assign(new THREE.BufferGeometry(),{}).setAttribute?
+      (()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pp,3));return g})()
+      :new THREE.BufferGeometry(),
+    new THREE.PointsMaterial({color:0x00c8ff,size:.16,transparent:true,opacity:.45})
+  );
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  scene.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x00c8ff,size:.16,transparent:true,opacity:.45})));
+
+  // Network nodes + lines
+  const nodes=[];
+  const nMat=new THREE.MeshBasicMaterial({color:0x00c8ff,transparent:true,opacity:.65});
+  for(let i=0;i<35;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.13,8,8),nMat);
+    m.position.set((Math.random()-.5)*65,(Math.random()-.5)*45,(Math.random()-.5)*20-15);
+    scene.add(m);nodes.push(m.position);
+  }
+  const lMat=new THREE.LineBasicMaterial({color:0x00c8ff,transparent:true,opacity:.055});
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+    if(nodes[i].distanceTo(nodes[j])<16){
+      const g=new THREE.BufferGeometry().setFromPoints([nodes[i],nodes[j]]);
+      scene.add(new THREE.Line(g,lMat));
+    }
+  }
+
+  // Torus ring
+  const torus=new THREE.Mesh(
+    new THREE.TorusGeometry(14,0.08,8,64),
+    new THREE.MeshBasicMaterial({color:0x00c8ff,transparent:true,opacity:.08})
+  );
+  torus.position.set(-18,6,-12);torus.rotation.x=Math.PI/3;
+  scene.add(torus);
+
+  let t=0;
+  (function animate(){
+    requestAnimationFrame(animate);t+=.003;
+    globe.rotation.y+=.002;globe.rotation.x+=.0005;
+    torus.rotation.z+=.003;
+    camera.position.x=Math.sin(t*.4)*1.5;camera.position.y=Math.cos(t*.3)*.8;
+    camera.lookAt(0,0,0);renderer.render(scene,camera);
+  })();
+  addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+  });
+})();
+</script>
+
+<!-- APP LOGIC -->
+<script>
+const API='http://localhost:5000';
+const $=id=>document.getElementById(id);
+
+function scoreColor(s){return s>=70?'var(--red)':s>=40?'var(--orange)':'var(--green)'}
+function scoreBadge(l){
+  if(!l)return'badge-info';const u=l.toUpperCase();
+  return u.includes('DANGER')||u.includes('SCAM')?'badge-danger':u.includes('SUSPICIOUS')||u.includes('WARN')?'badge-warn':'badge-safe';
+}
+function fmt(v,f='—'){return(v===null||v===undefined)?f:v}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(tab==='url'&&i===0)||(tab==='sms'&&i===1)));
+  $('tab-sms').classList.toggle('active',tab==='sms');
+}
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3500)}
+
+const phrases=['QUERYING WHOIS DATABASE...','CHECKING SSL CERTIFICATE...','RUNNING ML INFERENCE...',
+  'ANALYZING REDIRECT CHAIN...','CONSULTING GOOGLE SAFE BROWSING...','COMPUTING THREAT ENTROPY...',
+  'CROSS-REFERENCING BLACKLISTS...','GENERATING THREAT MATRIX...'];
+let li;
+
+function startLoading(){
+  $('result').style.display='none';$('sms-result').style.display='none';$('loading').style.display='block';
+  let i=0;$('loading-text').textContent=phrases[0];
+  li=setInterval(()=>{i=(i+1)%phrases.length;$('loading-text').textContent=phrases[i]},900);
+}
+function stopLoading(){clearInterval(li);$('loading').style.display='none'}
+
+function animateGauge(score){
+  const fill=$('gauge-fill'),scoreEl=$('gauge-score'),labelEl=$('gauge-label');
+  fill.style.stroke=scoreColor(score);
+  fill.style.strokeDashoffset=251-(score/100)*251;
+  scoreEl.style.color=scoreColor(score);
+  let c=0;const step=score/60;
+  const ct=setInterval(()=>{c=Math.min(c+step,score);scoreEl.textContent=Math.round(c);if(c>=score)clearInterval(ct)},16);
+  if(score>=70){labelEl.textContent='DANGER 🔴';labelEl.style.color='var(--red)'}
+  else if(score>=40){labelEl.textContent='SUSPICIOUS 🟡';labelEl.style.color='var(--orange)'}
+  else{labelEl.textContent='SAFE 🟢';labelEl.style.color='var(--green)'}
+}
+
+function buildWhyList(data,score){
+  const r=[],d=data.details||{};
+  if(d.domain_age?.age_score>60) r.push({i:'🕐',t:`Domain very new — only ${d.domain_age?.age_days||'?'} days old`});
+  if(d.ssl?.ssl_risk_score>50)   r.push({i:'🔓',t:`SSL certificate issue detected`});
+  if(d.geo?.is_hosting)          r.push({i:'🌍',t:`Hosted on suspicious datacenter/hosting`});
+  if(d.redirects?.suspicious)    r.push({i:'↩️',t:`${d.redirects.hop_count} suspicious redirects found`});
+  if(d.safe_browsing?.is_malicious) r.push({i:'☠️',t:`Google Safe Browsing: MALICIOUS — ${d.safe_browsing.threat_type}`});
+  if(d.lookalike?.is_lookalike)  r.push({i:'🎭',t:`Impersonates brand: ${d.lookalike.matched_brand}`});
+  if(d.shortener?.is_shortener)  r.push({i:'🔗',t:`URL shortener hiding true destination`});
+  if(d.entropy?.entropy_score>60) r.push({i:'🔢',t:`High URL entropy — obfuscated/randomized link`});
+  if(d.blacklists?.is_blacklisted) r.push({i:'🚫',t:`Found in threat intelligence blacklist`});
+  if((d.url_flags?.length||0)>2)  r.push({i:'⚠️',t:`${d.url_flags.length} URL pattern anomalies`});
+  if(r.length===0&&score<40){r.push({i:'✅',t:'No major threat signals detected'});r.push({i:'🔒',t:'SSL and domain age appear normal'})}
+  return r;
+}
+
+function buildCards(data){
+  const col=$('details-col');col.innerHTML='';
+  const d=data.details||{};
+
+  const matrix=[
+    {label:'Domain Age',val:d.domain_age?.age_score||0,color:'#ff6b82'},
+    {label:'SSL Health',val:d.ssl?.ssl_risk_score||0,color:'#ff9500'},
+    {label:'Geo Risk',val:d.geo?.geo_risk_score||0,color:'#ffd60a'},
+    {label:'URL Patterns',val:Math.min((d.url_flags?.length||0)*12,100),color:'#bf5af2'},
+    {label:'Redirects',val:d.redirects?.redirect_score||0,color:'#ff453a'},
+    {label:'Entropy',val:d.entropy?.entropy_score||0,color:'#30d158'},
+  ];
+
+  col.innerHTML+=`<div class="detail-card" style="animation-delay:.05s">
+    <div class="card-header"><span class="card-title">⚡ THREAT MATRIX</span>
+      <span class="card-badge ${scoreBadge(data.final_label)}">${data.final_label||'—'}</span></div>
+    ${matrix.map(m=>`<div class="matrix-row">
+      <span class="matrix-label">${m.label}</span>
+      <div class="matrix-bar-bg"><div class="matrix-bar-fill" style="width:${m.val}%;background:${m.color}"></div></div>
+      <span class="matrix-pct" style="color:${m.color}">${m.val}</span></div>`).join('')}
+  </div>`;
+
+  const age=d.domain_age||{},ssl=d.ssl||{},geo=d.geo||{};
+  col.innerHTML+=`<div class="detail-card" style="animation-delay:.1s">
+    <div class="card-header"><span class="card-title">🌐 DOMAIN INTELLIGENCE</span>
+      <span class="card-badge ${age.age_score>60?'badge-danger':age.age_score>30?'badge-warn':'badge-safe'}">
+        ${age.age_days!=null?age.age_days+' DAYS':'UNKNOWN'}</span></div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Registrar</div><div class="metric-val" style="font-size:.65rem">${fmt(age.registrar,'Unknown')}</div></div>
+      <div class="metric"><div class="metric-label">SSL Issuer</div><div class="metric-val" style="font-size:.65rem">${fmt(ssl.issuer,'—')}</div></div>
+      <div class="metric"><div class="metric-label">SSL Days Left</div><div class="metric-val">${fmt(ssl.days_left,'—')}</div></div>
+      <div class="metric"><div class="metric-label">Country</div><div class="metric-val">${fmt(geo.country,'—')}</div></div>
+      <div class="metric"><div class="metric-label">ISP</div><div class="metric-val" style="font-size:.65rem">${(fmt(geo.isp,'—')+'').substring(0,14)}</div></div>
+      <div class="metric"><div class="metric-label">Datacenter</div><div class="metric-val">${geo.is_hosting?'⚠️ YES':'✅ NO'}</div></div>
+    </div></div>`;
+
+  const flags=d.url_flags||[];
+  col.innerHTML+=`<div class="detail-card" style="animation-delay:.15s">
+    <div class="card-header"><span class="card-title">🚩 URL FLAGS</span>
+      <span class="card-badge ${flags.length>2?'badge-danger':flags.length>0?'badge-warn':'badge-safe'}">${flags.length} FOUND</span></div>
+    <div class="flags-wrap">${flags.length?flags.map(f=>`<span class="flag-chip">${f}</span>`).join(''):'<span class="flag-chip ok">✅ No suspicious patterns</span>'}</div>
+  </div>`;
+
+  const gsb=d.safe_browsing||{},redir=d.redirects||{};
+  col.innerHTML+=`<div class="detail-card" style="animation-delay:.2s">
+    <div class="card-header"><span class="card-title">🛡️ THREAT INTELLIGENCE</span></div>
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">Google GSB</div><div class="metric-val">${gsb.checked?(gsb.is_malicious?'☠️ THREAT':'✅ CLEAR'):'⚠️ N/A'}</div></div>
+      <div class="metric"><div class="metric-label">Threat Type</div><div class="metric-val" style="font-size:.6rem">${fmt(gsb.threat_type,'NONE')}</div></div>
+      <div class="metric"><div class="metric-label">Redirects</div><div class="metric-val">${fmt(redir.hop_count,0)} hops</div></div>
+      <div class="metric"><div class="metric-label">Blacklist</div><div class="metric-val">${d.blacklists?.is_blacklisted?'☠️ YES':'✅ NO'}</div></div>
+      <div class="metric"><div class="metric-label">Shortener</div><div class="metric-val">${d.shortener?.is_shortener?'⚠️ YES':'✅ NO'}</div></div>
+      <div class="metric"><div class="metric-label">Lookalike</div><div class="metric-val" style="font-size:.65rem">${d.lookalike?.is_lookalike?'⚠️ '+d.lookalike.matched_brand:'✅ NO'}</div></div>
+    </div></div>`;
+
+  const reasons=buildWhyList(data,data.final_score);
+  col.innerHTML+=`<div class="detail-card" style="animation-delay:.25s">
+    <div class="card-header"><span class="card-title">🤖 AI EXPLANATION</span><span class="card-badge badge-info">WHY?</span></div>
+    <ul class="why-list">${reasons.map(r=>`<li><span class="icon">${r.i}</span><span>${r.t}</span></li>`).join('')}</ul>
+  </div>`;
+}
+
+async function scanURL(){
+  const url=$('url-input').value.trim();
+  if(!url){toast('⚠️ Please enter a URL');return}
+  $('scan-btn').disabled=true;startLoading();
+  try{
+    const res=await fetch(`${API}/analyze`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const data=await res.json();
+    stopLoading();renderResult(data);
+    addHistory(url,data.final_score,data.final_label,data.timestamp);
+  }catch(e){stopLoading();toast('❌ Cannot reach backend — is app.py running on :5000?')}
+  finally{$('scan-btn').disabled=false}
+}
+
+function renderResult(data){
+  $('result').style.display='block';
+  $('result').scrollIntoView({behavior:'smooth',block:'start'});
+  const score=data.final_score||0;
+  animateGauge(score);
+  $('ml-val').textContent=(data.ml_based?.score??'—')+(data.ml_based?'%':'');
+  $('rule-val').textContent=(data.rule_based?.score??'—')+(data.rule_based?'%':'');
+  $('ens-val').textContent=(data.ensemble?.score??'—')+(data.ensemble?'%':'');
+  const gsb=data.details?.safe_browsing;
+  $('gsb-val').textContent=gsb?.checked?(gsb.is_malicious?'☠️ THREAT':'✅ CLEAR'):'⚠️ N/A';
+  $('score-card').style.borderColor=scoreColor(score);
+  $('score-card').style.boxShadow=`0 0 50px ${scoreColor(score)}1a`;
+  buildCards(data);
+  if(gsb?.checked){const d=$('gsb-dot');d.style.background='var(--green)';d.style.boxShadow='0 0 8px var(--green)'}
+}
+
+async function scanSMS(){
+  const text=$('sms-input').value.trim();
+  if(!text){toast('⚠️ Please enter message text');return}
+  $('sms-btn').disabled=true;startLoading();
+  try{
+    const res=await fetch(`${API}/analyze-sms`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    const data=await res.json();
+    stopLoading();renderSMSResult(data);
+    addHistory('[SMS] '+text.substring(0,40)+'…',data.final_score,data.final_label,new Date().toISOString());
+  }catch(e){stopLoading();toast('❌ Cannot reach backend')}
+  finally{$('sms-btn').disabled=false}
+}
+
+function renderSMSResult(data){
+  const score=data.final_score||0;
+  const sms=data.sms_analysis||{};
+  const cats=sms.categories||{};
+  let catsHTML=Object.entries(cats).map(([k,v])=>`<span class="flag-chip">${k}: ${Array.isArray(v)?v.join(', '):v}</span>`).join('');
+  let urlsHTML='';
+  if((data.urls_found||[]).length){
+    urlsHTML=`<div style="margin-top:1rem"><div class="card-title" style="margin-bottom:.7rem">🔗 URLS IN MESSAGE</div>`;
+    data.urls_found.forEach(u=>{urlsHTML+=`
+      <div style="display:flex;align-items:center;justify-content:space-between;
+        background:rgba(255,255,255,.03);border-radius:8px;padding:.6rem 1rem;margin-bottom:.5rem;border:1px solid rgba(255,255,255,.06)">
+        <span style="font-size:.72rem;color:var(--muted);font-family:var(--font-mono)">${u.url}</span>
+        <span class="card-badge ${scoreBadge(u.label)}">${u.score}%</span></div>`});
+    urlsHTML+='</div>';
+  }
+  $('sms-card-inner').innerHTML=`
+    <div class="card-header"><span class="card-title">📱 SMS THREAT ANALYSIS</span>
+      <span class="card-badge ${scoreBadge(data.final_label)}">${data.final_label}</span></div>
+    <div style="display:flex;align-items:center;gap:2rem;margin-bottom:1.5rem">
+      <div><div style="font-family:var(--font-head);font-size:3rem;font-weight:900;color:${scoreColor(score)}">${score}</div>
+        <div style="font-size:.68rem;color:var(--muted)">THREAT SCORE</div></div>
+      <div style="flex:1"><div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem">Signal Hits: ${sms.total_hits||0}</div>
+        <div class="flags-wrap">${catsHTML||'<span class="flag-chip ok">No scam signals</span>'}</div></div>
+    </div>
+    <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:.8rem 1rem;border:1px solid rgba(255,255,255,.06);margin-bottom:1rem">
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:.3rem">MESSAGE SNIPPET</div>
+      <div style="font-family:var(--font-mono);font-size:.78rem">${data.text_snippet||''}</div></div>
+    ${urlsHTML}`;
+  $('sms-result').style.display='block';
+  $('sms-result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function addHistory(url,score,label,ts){
+  const tbody=$('history-body');
+  if(tbody.querySelector('td[colspan]'))tbody.innerHTML='';
+  const row=document.createElement('tr');
+  row.innerHTML=`<td class="hist-url">${url}</td>
+    <td style="font-family:var(--font-mono);font-weight:700;color:${scoreColor(score)}">${score}</td>
+    <td><span class="card-badge ${scoreBadge(label)}">${label}</span></td>
+    <td style="color:var(--muted);font-size:.68rem">${ts?new Date(ts).toLocaleTimeString():'—'}</td>`;
+  tbody.prepend(row);
+}
+
+$('url-input').addEventListener('keydown',e=>{if(e.key==='Enter')scanURL()});
+
+async function init(){
+  try{
+    const r=await fetch(`${API}/health`);const d=await r.json();
+    if(d.gsb){const dot=$('gsb-dot');dot.style.background='var(--green)';dot.style.boxShadow='0 0 8px var(--green)'}
+    const r2=await fetch(`${API}/history`);const d2=await r2.json();
+    (d2.scans||[]).slice(0,8).reverse().forEach(s=>addHistory(s.url,s.score,s.label,s.time));
+  }catch(e){}
+}
+init();
+</script>
+</body>
+</html>

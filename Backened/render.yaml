@@ -1,0 +1,50 @@
+services:
+  # ── Main API Backend ──────────────────────────────────────────────────────
+  - type: web
+    name: trinetra-api
+    runtime: python
+    rootDir: Backened
+    # Install numpy first (exact pin) before scikit-learn to avoid
+    # pip pulling in numpy rc/yanked versions during build resolution.
+    buildCommand: |
+      python -m pip install --upgrade pip setuptools wheel
+      pip install --only-binary=:all: numpy==1.26.4
+      pip install --only-binary=:all: -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: GOOGLE_SAFE_BROWSING_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        value: whatsapp:+14155238886
+      - key: ALLOWED_ORIGINS
+        value: https://your-vercel-domain.vercel.app,http://localhost:5500
+      - key: PORT
+        value: "5000"
+
+  # ── WhatsApp Bot (separate service) ──────────────────────────────────────
+  - type: web
+    name: trinetra-whatsapp-bot
+    runtime: python
+    rootDir: Backened
+    buildCommand: |
+      python -m pip install --upgrade pip setuptools wheel
+      pip install --only-binary=:all: numpy==1.26.4
+      pip install --only-binary=:all: -r requirements.txt
+    startCommand: gunicorn whatsapp_bot:bot_app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: TRINETRA_API_URL
+        value: https://trinetra-api.onrender.com
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: BOT_PORT
+        value: "10000"
